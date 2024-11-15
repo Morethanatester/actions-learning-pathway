@@ -1,47 +1,26 @@
 name: build-test-deploy
-# The name of the workflow, which will be displayed in the Actions tab of the repository
-
 on: push
-# Specifies the event that triggers the workflow. In this case, the workflow runs every time a push is made to the repository.
-
 jobs: 
   build:
     runs-on: ubuntu-latest
-    # Defines the environment in which the job will run. Here, it uses the latest version of Ubuntu.
-
     steps: 
       - name: checkout repo
         uses: actions/checkout@v3
-        # Uses the actions/checkout@v3 action from GitHub Marketplace to check out the repository to the GitHub Actions runner, 
-        # allowing the workflow to access the repository's content.
-
       - name: use node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
-        # Uses the actions/setup-node@v3 action from GitHub Marketplace to set up the Node.js environment with version 18.x, 
-        # making Node.js and npm available for subsequent steps.
-
       - run: npm install
-        # Installs the project's dependencies defined in package.json using npm.
-
       - run: npm run build 
-        # Runs the build script defined in package.json, typically used to compile or bundle the project.
-
-  test:
-      needs: build
-      runs-on: ubuntu-latest
-      # Defines the environment in which the job will run. Here, it uses a self-hosted runner, as mentioned in the guide.
-      steps:
-        - name: checkout repo
-          uses: actions/checkout@v3
-          # Uses the actions/checkout@v3 action from GitHub Marketplace to check out the repository to the GitHub Actions runner, 
-          # allowing the workflow to access the repository's content.
-        - name: use node.js
-          uses: actions/setup-node@v3
-          with:
-            node-version: '18.x'
-  
-        - run: run install
-        - run: npm test
-          # Runs the test script defined in package.json, typically used to execute the project's tests.
+  test: 
+    needs: build
+    runs-on: ubuntu-latest
+    steps: 
+      - name: checkout repo
+        uses: actions/checkout@v3
+      - name: use node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+      - run: npm install
+      - run: npm test
