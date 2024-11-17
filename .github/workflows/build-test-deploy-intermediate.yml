@@ -1,45 +1,141 @@
 name: build-test-deploy-intermediate
-# Changed 'on' to enable this workflow to be called from other workflows
+# This workflow is designed to be reusable and can be invoked by other workflows.
+
 on:
   workflow_call:
-    # Introduced 'inputs' to define parameters that can be passed when calling this workflow
+    # 'workflow_call' allows this workflow to be triggered from another workflow.
     inputs:
       node-version:
+        # The Node.js version to use is passed as an input.
         description: "Node version"
         required: true
         type: string
 
 jobs: 
   build:
+    # The 'build' job compiles the project.
     runs-on: ubuntu-latest
+    # Specifies that the job will run on the latest version of Ubuntu.
 
     steps: 
       - name: checkout repo
+        # This step checks out the repository so the workflow can access the codebase.
         uses: actions/checkout@v3
-      # Modified to use the node-version from the workflow inputs
+
       - name: use node.js
+        # Sets up the Node.js environment using the version specified in the input.
         uses: actions/setup-node@v3
         with:
           node-version: ${{ inputs.node-version }}
 
       - run: npm install
+        # Installs dependencies required for the project.
+
       - run: npm run build
+        # Runs the build script defined in the project's `package.json`.
 
   test: 
+    # The 'test' job ensures the project passes all tests.
     needs: build
+    # Specifies that this job depends on the successful completion of the 'build' job.
 
     runs-on: ubuntu-latest
+    # Specifies that the job will run on the latest version of Ubuntu.
 
     steps: 
       - name: checkout repo
+        # Checks out the repository to access the codebase for testing.
         uses: actions/checkout@v3
-      # Modified to use the node-version from the workflow inputs
+
       - name: use node.js
+        # Sets up the Node.js environment using the version specified in the input.
         uses: actions/setup-node@v3
         with:
           node-version: ${{ inputs.node-version }}
-          
+
       - run: npm install
+        # Installs dependencies required for running tests.
+
       - run: npm run test
+        # Executes the test script defined in the project's `package.json`.
         env:
           CI: true
+          # Sets the CI environment variable to true, ensuring that tests are run in a continuous integration environment.
+
+      - name: Generate Test Report (Example Concept)
+        # Use a tool like Jest to generate a test report.
+        run: npm run test -- --reporter=json > test-report.json
+
+      - name: Upload Test Report
+        # Uploads the test report for future reference or integration with external tools.
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-report
+          path: test-report.json
+
+# Concepts from "Create and Provision GitHub Actions Runner Group"
+# - Runner groups are used to manage which repositories can access specific self-hosted runners.
+# - Add labels to restrict workflows to specific runners.
+
+# Example: Assigning a specific runner for this workflow.
+# runs-on: [self-hosted, ubuntu-latest, label-for-project]
+
+# Concepts from "Create Reusable Workflows in GitHub Actions"
+# - Reusable workflows allow teams to standardize processes, reduce redundancy, and improve maintainability.
+# - They can include input validation, secrets management, and conditional steps.
+
+# Concepts from "Manage and Monitor Workflows in GitHub Actions"
+# - Use 'workflow_run' to trigger follow-up workflows.
+# - Monitoring includes checking resource usage, optimizing runners, and tracking execution time.
+# - Add manual triggers for emergency deployment or testing.
+
+# Example: Adding a manual dispatch event
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       environment:
+#         description: "Environment to deploy to (e.g., dev, staging, prod)"
+#         required: true
+#         type: choice
+#         options:
+#           - dev
+#           - staging
+#           - prod
+
+# Concepts from "Advanced Testing Strategies with GitHub Actions"
+# - Use matrix builds for testing across multiple environments (e.g., Node.js versions).
+# - Enable parallel execution for faster feedback.
+
+# Example: Matrix Testing
+# test-matrix:
+#   needs: build
+#   runs-on: ubuntu-latest
+#   strategy:
+#     matrix:
+#       node-version: [14, 16, 18]
+#   steps:
+#     - name: checkout repo
+#       uses: actions/checkout@v3
+#     - name: use node.js
+#       uses: actions/setup-node@v3
+#       with:
+#         node-version: ${{ matrix.node-version }}
+#     - run: npm install
+#     - run: npm run test
+
+# Concepts from "Advanced Automated Deployment in GitHub Actions"
+# - Add deployment protection rules, such as requiring approval before deploying to production.
+# - Capture and use deployment outputs for follow-up workflows.
+
+# Example: Deployment Step with Outputs
+# deploy:
+#   needs: test
+#   runs-on: ubuntu-latest
+#   steps:
+#     - name: Deploy Application
+#       run: |
+#         echo "Deploying application..."
+#         echo "deployment_id=12345" >> $GITHUB_ENV
+#     - name: Notify Deployment
+#       # Use deployment output to send a notification or trigger another workflow.
+#       run: echo "Deployment ID: ${{ env.deployment_id }}"
