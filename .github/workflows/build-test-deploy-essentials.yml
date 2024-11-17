@@ -1,63 +1,150 @@
 name: build-test-deploy-essentials
-on: push
+# This workflow automates building, testing, and deploying an application using GitHub Actions and GitHub Pages.
+
+on: 
+  push
+  # Trigger this workflow on every push to the repository.
+
 jobs: 
   build:
+    # The 'build' job compiles the project.
     runs-on: ubuntu-latest
+    # Specifies that the job will run on the latest version of Ubuntu.
+
     steps: 
       - name: Checkout Repo
+        # Checks out the repository so the workflow can access the codebase.
         uses: actions/checkout@v3
+
       - name: Use Node.js
+        # Sets up Node.js environment for the project.
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
+          # Specifies the Node.js version to use.
+
       - run: npm install
-      - run: npm run build 
-  
+        # Installs dependencies defined in `package.json`.
+
+      - run: npm run build
+        # Runs the build script to compile the project.
+
   test: 
+    # The 'test' job ensures the project passes all tests before deploying.
     needs: build
+    # Specifies that this job depends on the successful completion of the 'build' job.
+
     runs-on: ubuntu-latest
+    # Specifies that the job will run on the latest version of Ubuntu.
+
     steps: 
       - name: Checkout Repo
+        # Checks out the repository so the workflow can access the codebase for testing.
         uses: actions/checkout@v3
+
       - name: Use Node.js
+        # Sets up Node.js environment for the project.
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
+          # Specifies the Node.js version to use.
+
       - run: npm install
+        # Installs dependencies defined in `package.json`.
+
       - run: npm test
+        # Runs the test script defined in `package.json`.
         env:
           CI: true
+          # Ensures that tests are run in a continuous integration environment.
 
   deploy:
+    # The 'deploy' job deploys the application to GitHub Pages.
     needs: test
+    # Specifies that this job depends on the successful completion of the 'test' job.
+
     permissions:
       contents: write
-      pages: write     
-      id-token: write  
+      pages: write
+      id-token: write
+      # Sets permissions required for deploying to GitHub Pages.
+
     environment:
       name: production
+      # Defines the deployment environment as 'production'.
       url: ${{ steps.deployment.outputs.page_url }}
+      # Automatically stores the deployed page URL in the environment.
+
     runs-on: ubuntu-latest
+    # Specifies that the job will run on the latest version of Ubuntu.
+
     steps:
       - name: Checkout Repo
+        # Checks out the repository for deployment.
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          # Uses a GitHub token to authenticate actions.
+
       - name: Use Node.js
+        # Sets up Node.js environment for the project.
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
+          # Specifies the Node.js version to use.
+
       - name: Configure GitHub Pages
+        # Configures GitHub Pages for deployment.
         uses: actions/configure-pages@v3
         with:
           static_site_generator: next
+          # Indicates the project uses the Next.js static site generator.
+
       - run: npm install
+        # Installs dependencies defined in `package.json`.
+
       - run: npm run build
+        # Runs the build script to compile the project for deployment.
+
       - name: Upload Artifacts
+        # Uploads the built project as artifacts for deployment.
         uses: actions/upload-pages-artifact@v1
         with: 
           path: "./out"
+          # Specifies the output directory to be uploaded.
+
       - name: Deploy
+        # Deploys the application to GitHub Pages.
         id: deployment
         uses: actions/deploy-pages@v1
+
       - run: echo '### Deployment Successful 🚀' >> $GITHUB_STEP_SUMMARY
+        # Adds a success message to the workflow summary.
+
+# Additional Concepts from the Essentials Guide:
+#
+# - **Environments and Approvals:**
+#   Define environments for staging and production to add deployment protection rules or require manual approvals.
+#   Example:
+#   environment:
+#     name: staging
+#     url: ${{ steps.deployment.outputs.page_url }}
+#     reviewers:
+#       - team-slug
+
+# - **Static Site Generators:**
+#   Use tools like Jekyll, Hugo, or Next.js for static site generation. The `actions/configure-pages` step allows specifying the generator.
+
+# - **Secrets Management:**
+#   Store sensitive information, like API keys, as GitHub Secrets to avoid exposing them in the workflow file.
+#   Example:
+#   with:
+#     token: ${{ secrets.MY_SECRET_TOKEN }}
+
+# - **Notifications:**
+#   Add steps to notify stakeholders or teams about the deployment status, e.g., via Slack or email.
+#   Example:
+#   - name: Notify on Slack
+#     uses: slackapi/slack-github-action@v1.23.0
+#     with:
+#       payload: '{"text":"Deployment to production was successful!"}'
