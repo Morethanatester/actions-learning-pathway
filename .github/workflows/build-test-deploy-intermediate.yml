@@ -1,4 +1,4 @@
-name: build-test-deploy
+name: build-test-deploy-intermediate
 # Changed 'on' to enable this workflow to be called from other workflows
 on:
   workflow_call:
