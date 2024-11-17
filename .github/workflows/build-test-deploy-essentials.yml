@@ -60,3 +60,6 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v1
+      - name: Adding markdown
+      - run: echo '### Deployment Successful 🚀' >> $GITHUB_STEP_SUMMARY
+
