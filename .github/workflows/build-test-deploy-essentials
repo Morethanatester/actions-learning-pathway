@@ -1,4 +1,4 @@
-name: build-test-deploy-essentials
+name: build-test-deploy
 on: push
 jobs: 
   build:
