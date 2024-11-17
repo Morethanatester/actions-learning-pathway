@@ -1,62 +1,43 @@
 name: build-test-deploy-intermediate
-on: push
+# Changed 'on' to enable this workflow to be called from other workflows
+on:
+  workflow_call:
+    # Introduced 'inputs' to define parameters that can be passed when calling this workflow
+    inputs:
+      node-version:
+        description: "Node version"
+        required: true
+        type: string
+
 jobs: 
   build:
     runs-on: ubuntu-latest
-    steps: 
-      - name: Checkout Repo
-        uses: actions/checkout@v3
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18.x'
-      - run: npm install
-      - run: npm run build 
-  
-  test: 
-    needs: build
-    runs-on: ubuntu-latest
-    steps: 
-      - name: Checkout Repo
-        uses: actions/checkout@v3
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18.x'
-      - run: npm install
-      - run: npm test
-        env:
-          CI: true
 
-  deploy:
-    needs: test
-    permissions:
-      contents: write
-      pages: write     
-      id-token: write  
-    environment:
-      name: production
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
+    steps: 
+      - name: checkout repo
         uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Use Node.js
+      # Modified to use the node-version from the workflow inputs
+      - name: use node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18.x'
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v3
-        with:
-          static_site_generator: next
+          node-version: ${{ inputs.node-version }}
+
       - run: npm install
       - run: npm run build
-      - name: Upload Artifacts
-        uses: actions/upload-pages-artifact@v1
-        with: 
-          path: "./out"
-      - name: Deploy
-        id: deployment
-        uses: actions/deploy-pages@v1
+
+  test: 
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    steps: 
+      - name: checkout repo
+        uses: actions/checkout@v3
+      # Modified to use the node-version from the workflow inputs
+      - name: use node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ inputs.node-version }}
+          
+      - run: npm install
+      - run: npm run test
