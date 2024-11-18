@@ -74,17 +74,21 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Check Environment
-        if: ${{ secrets.ENVIRONMENT == 'production' }}
-        run: echo "ENVIRONMENT secret is set to 'production'. Proceeding with deployment."
+        # Evaluate the secret in a shell command and conditionally proceed.
+        env:
+          ENVIRONMENT: ${{ secrets.ENVIRONMENT }}
+        run: |
+          if [ "$ENVIRONMENT" = "production" ]; then
+            echo "ENVIRONMENT is set to production. Proceeding with deployment.";
+          else
+            echo "ENVIRONMENT is not set to production. Exiting.";
+            exit 1;
+          fi
 
       - name: Deploy Application
-        if: ${{ secrets.ENVIRONMENT == 'production' }}
+        # Only runs if the previous step does not exit.
         run: |
           echo "Starting deployment..."
           echo "Copying files to production server..."
           echo "Restarting production services..."
           echo "Deployment complete!"
-
-      - name: Deployment Skipped
-        if: ${{ secrets.ENVIRONMENT != 'production' }}
-        run: echo "Deployment skipped because ENVIRONMENT is not set to 'production'."
