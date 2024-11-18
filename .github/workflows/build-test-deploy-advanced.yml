@@ -1,4 +1,4 @@
-name: advanced-workflow-with-secrets
+name: build-test-deploy-advanced
 
 on:
   push:
