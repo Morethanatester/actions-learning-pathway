@@ -1,52 +1,63 @@
 name: build-test-deploy-advanced
+# Workflow name: Automates building, testing, and deploying an application with advanced configurations.
 
 on:
   push:
     branches:
       - main
+    # Triggers the workflow on pushes to the 'main' branch.
   pull_request:
     branches:
       - main
+    # Triggers the workflow when a pull request targets the 'main' branch.
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-  # Cancel any other runs in progress within the same concurrency group, ensuring only the most recent workflow run is executed.
+  # Prevents multiple concurrent runs of the same workflow for the same branch or PR.
 
 jobs:
   build:
     if: github.repository == 'morethanatester/actions-learning-pathway'
-    # This job will only run if the repository matches the specified one.
+    # This job runs only if the repository matches the specified one.
     runs-on: ubuntu-latest
     env:
-      MY_VARIABLE: "This is not a secret"  # This is a public environment variable
+      MY_VARIABLE: "This is not a secret"  # Example public environment variable.
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
+        # Retrieves the repository code so the workflow can access it.
 
       - name: Echo Environment Variable
         run: echo "My environment variable is $MY_VARIABLE"
+        # Demonstrates usage of environment variables.
 
       - name: Echo GitHub Secret
         run: echo "My GitHub secret is ${{ secrets.MY_GITHUB_SECRET }}"
+        # Securely accesses a secret configured in GitHub, ensuring it's masked in logs.
 
       - name: Set Up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
+        # Configures the environment to use Node.js version 18.x.
 
       - name: Install Dependencies
         run: npm install
+        # Installs dependencies required for the build.
 
       - name: Run Build Script
         run: npm run build
+        # Executes the build script to compile the project.
 
   test:
     if: github.repository == 'morethanatester/actions-learning-pathway'
-    # This job will only run if the repository matches the specified one.
+    # This job runs only if the repository matches the specified one.
     runs-on: ubuntu-latest
     needs: build
+    # Depends on the successful completion of the build job.
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -63,32 +74,71 @@ jobs:
         run: npm test
         env:
           CI: true
+        # Ensures tests are run in a CI environment.
 
   deploy:
     if: github.repository == 'morethanatester/actions-learning-pathway' && github.ref == 'refs/heads/main' && github.event_name == 'push'
     # Deploys only if the repository matches, the branch is 'main', and the event is a push.
     runs-on: ubuntu-latest
     needs: test
+    # Depends on the successful completion of the test job.
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Check Environment
-        # Evaluate the secret in a shell command and conditionally proceed.
+      - name: Validate Environment
         env:
-          ENVIRONMENT: ${{ secrets.ENVIRONMENT }}
+          ENVIRONMENT: ${{ secrets.MY_GITHUB_SECRET }}
         run: |
-          if [ "$ENVIRONMENT" = "production" ]; then
-            echo "ENVIRONMENT is set to production. Proceeding with deployment.";
-          else
-            echo "ENVIRONMENT is not set to production. Exiting.";
+          if [ "$ENVIRONMENT" != "production" ]; then
+            echo "MY_GITHUB_SECRET is not set to 'production'. Exiting deployment.";
             exit 1;
           fi
+        # Validates the secret value before proceeding.
+
+      - name: Notify Start of Deployment
+        run: |
+          echo "Deployment started at $(date)" > deployment_log.txt
+          echo "Sending notification to stakeholders..."
+        # Logs the start of deployment and sends a notification.
 
       - name: Deploy Application
-        # Only runs if the previous step does not exit.
         run: |
-          echo "Starting deployment..."
-          echo "Copying files to production server..."
-          echo "Restarting production services..."
-          echo "Deployment complete!"
+          echo "Deploying application..."
+          # Example: Copy files to the server
+          echo "Copying files to the server..."
+          scp -r ./build/* user@server:/var/www/html
+          # Example: Restart services
+          echo "Restarting services on the server..."
+          ssh user@server 'sudo systemctl restart nginx'
+          echo "Deployment completed successfully."
+        # Simulates deployment steps, such as copying files and restarting services.
+
+      - name: Notify Completion
+        run: |
+          echo "Deployment completed at $(date)" >> deployment_log.txt
+          echo "Sending success notification to stakeholders."
+        # Logs the completion and notifies stakeholders.
+
+      - name: Archive Deployment Logs
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment-logs
+          path: deployment_log.txt
+        # Archives the deployment logs for future reference.
+
+# Additional Scripting Examples:
+
+# 1. Notification via Slack
+# Add a step to send a Slack message using a Slack webhook:
+# - name: Notify on Slack
+#   run: |
+#     curl -X POST -H 'Content-type: application/json' --data '{"text":"Deployment to production started!"}' ${{ secrets.SLACK_WEBHOOK_URL }}
+
+# 2. Script for Database Migrations
+# Add a step for running database migrations:
+# - name: Run Database Migrations
+#   run: |
+#     ssh user@server 'cd /var/www/html && ./manage.py migrate'
+#     echo "Database migrations applied successfully."
