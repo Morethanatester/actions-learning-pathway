@@ -80,11 +80,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Echo GitHub Secret in Deploy
-        # Example of reusing secrets in deployment.
-        run: echo "Deploying with secret: ${{ secrets.MY_DEPLOY_SECRET }}"
-        # This secret will also be masked in logs.
-
       - name: Deploy Application
         run: |
           echo "Starting deployment..."
