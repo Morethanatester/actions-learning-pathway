@@ -86,9 +86,6 @@ jobs:
         # This secret will also be masked in logs.
 
       - name: Deploy Application
-        #run: ./scripts/deploy.sh
-        # Executes an external deployment script for modularity and reusability.
-            - name: Deploy Application
         run: |
           echo "Starting deployment..."
           # Example: Simulate copying files to a server
