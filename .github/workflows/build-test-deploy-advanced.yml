@@ -33,10 +33,6 @@ jobs:
         run: echo "My environment variable is $MY_VARIABLE"
         # Demonstrates usage of environment variables.
 
-      - name: Echo GitHub Secret
-        run: echo "My GitHub secret is ${{ secrets.MY_GITHUB_SECRET }}"
-        # Securely accesses a secret configured in GitHub, ensuring it's masked in logs.
-
       - name: Set Up Node.js
         uses: actions/setup-node@v3
         with:
@@ -88,45 +84,26 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Validate Environment
+        # Evaluates the correct secret value before proceeding.
         env:
-          ENVIRONMENT: ${{ secrets.MY_GITHUB_SECRET }}
+          ENVIRONMENT: ${{ secrets.ENVIRONMENT }}
         run: |
+          ENVIRONMENT=${ENVIRONMENT:-"undefined"}  # Set default if the secret is missing.
+          echo "ENVIRONMENT value is: '$ENVIRONMENT'"  # Debugging log.
           if [ "$ENVIRONMENT" != "production" ]; then
-            echo "MY_GITHUB_SECRET is not set to 'production'. Exiting deployment.";
+            echo "ENVIRONMENT is not set to 'production'. Exiting deployment.";
             exit 1;
           fi
-        # Validates the secret value before proceeding.
-
-      - name: Notify Start of Deployment
-        run: |
-          echo "Deployment started at $(date)" > deployment_log.txt
-          echo "Sending notification to stakeholders..."
-        # Logs the start of deployment and sends a notification.
+          echo "ENVIRONMENT is set to 'production'. Proceeding with deployment."
 
       - name: Deploy Application
         run: |
-          echo "Deploying application..."
-          # Example: Copy files to the server
-          echo "Copying files to the server..."
-          scp -r ./build/* user@server:/var/www/html
-          # Example: Restart services
-          echo "Restarting services on the server..."
-          ssh user@server 'sudo systemctl restart nginx'
-          echo "Deployment completed successfully."
+          echo "Starting deployment..."
+          echo "Copying files to production server..."
+          echo "Restarting production services..."
+          echo "Deployment complete!"
         # Simulates deployment steps, such as copying files and restarting services.
 
-      - name: Notify Completion
-        run: |
-          echo "Deployment completed at $(date)" >> deployment_log.txt
-          echo "Sending success notification to stakeholders."
-        # Logs the completion and notifies stakeholders.
-
-      - name: Archive Deployment Logs
-        uses: actions/upload-artifact@v3
-        with:
-          name: deployment-logs
-          path: deployment_log.txt
-        # Archives the deployment logs for future reference.
 
 # Additional Scripting Examples:
 
