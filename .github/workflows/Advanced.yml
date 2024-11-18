@@ -1,29 +1,98 @@
-name: Echo Secrets and Variables
+name: advanced-workflow-with-secrets
+
 on:
   push:
     branches:
-      - main  # Trigger this action when changes are pushed to the main branch
+      - main
+  pull_request:
+    branches:
+      - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+  # setting cancel-in-progress to true cancels any other runs in progress within the same concurrency group, ensuring that only the most recent workflow run is executed. 
+  # particularly useful when you have multiple runs queued.
 
 jobs:
   build:
+    if: github.repository == 'morethanatester/actions-learning-pathway'
+    # This job will only run if the repository is your specified repository.
     runs-on: ubuntu-latest
-
-
-
     env:
       MY_VARIABLE: "This is not a secret"  # This is a public environment variable
 
-
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout Repository
+        # Checks out the repository so the workflow can access the codebase.
+        uses: actions/checkout@v3
 
+      - name: Echo Environment Variable
+        # Demonstrates how to use an environment variable in the workflow.
+        run: echo "My environment variable is $MY_VARIABLE" # This variable will not be masked.
 
+      - name: Echo GitHub Secret
+        # Demonstrates how to securely use a secret stored in GitHub.
+        run: echo "My GitHub secret is ${{ secrets.MY_GITHUB_SECRET }}" # This secret will be masked in the logs.
 
-    - name: Echo environment variable
-      run: echo "My environment variable is $MY_VARIABLE" # This is your variable that will not be masked
-      
-    - name: Echo GitHub secret
-      run: echo "My GitHub secret is ${{ secrets.MY_GITHUB_SECRET }}" # This is the secret you added in a previous step
+      - name: Set Up Node.js
+        # Sets up Node.js environment for the project.
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+
+      - name: Install Dependencies
+        # Installs dependencies required for the project.
+        run: npm install
+
+      - name: Run Build Script
+        # Runs the build script to compile the project.
+        run: npm run build
+
+  test:
+    if: github.repository == 'morethanatester/actions-learning-pathway'
+    # This job will only run if the repository is your specified repository.
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set Up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test
+        env:
+          CI: true
+
+  deploy:
+    if: secrets.ENVIRONMENT == 'production' && github.repository == 'morethanatester/actions-learning-pathway' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+    # Deploys only when the environment secret is set to 'production', the repository is your specified repository, the branch is main, and the event is a push.
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Echo GitHub Secret in Deploy
+        # Example of reusing secrets in deployment.
+        run: echo "Deploying with secret: ${{ secrets.MY_DEPLOY_SECRET }}"
+        # This secret will also be masked in logs.
+
+      - name: Deploy Application
+        #run: ./scripts/deploy.sh
+        # Executes an external deployment script for modularity and reusability.
+            - name: Deploy Application
+        run: |
+          echo "Starting deployment..."
+          # Example: Simulate copying files to a server
+          echo "Copying files to production server..."
+          # Example: Simulate restarting a service
+          echo "Restarting production services..."
+          echo "Deployment complete!"
