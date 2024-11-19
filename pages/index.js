@@ -1,11 +1,24 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import styles from '@/styles/Home.module.css'
+import Head from 'next/head';
+import Image from 'next/image';
+import { Inter } from 'next/font/google';
+import styles from '@/styles/Home.module.css';
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'] });
+
+// Function to generate greeting based on input
+function getGreeting(whoToGreet) {
+  const currentTime = new Date().toLocaleTimeString();
+  return {
+    message: `Hello, ${whoToGreet}!`,
+    time: currentTime,
+  };
+}
 
 export default function Home() {
+  // Simulate receiving input from GitHub Actions
+  const whoToGreet = "World"; // Replace with dynamic input in real action
+  const { message, time } = getGreeting(whoToGreet);
+
   return (
     <>
       <Head>
@@ -15,11 +28,11 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={`${styles.main} ${inter.className}`}>
-
-       <h1>Congratulations!</h1>
-  <p>You've completed the essentials of automated application deployment with GitHub Actions! 🥳</p>
-
+        <h1>Congratulations!</h1>
+        <p>You've completed the essentials of automated application deployment with GitHub Actions! 🥳</p>
+        <h2>{message}</h2>
+        <p>Greeting generated at: {time}</p>
       </main>
     </>
-  )
+  );
 }
